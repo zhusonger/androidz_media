@@ -59,7 +59,7 @@ publish {
     dryRun false
     override true
     artifactId = 'media'
-    publishVersion = '0.0.1'
+    publishVersion = '0.0.3'
     desc = 'AndroidZ Media'
     website = 'https://github.com/zhusonger/androidz_media'
 }
