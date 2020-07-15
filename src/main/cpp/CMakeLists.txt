@@ -3,10 +3,39 @@
 # 设置CMake的最低版本构建本机所需库
 cmake_minimum_required(VERSION 3.4.1)
 
-# 二进制码剥除
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
+# 二进制码剥除
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+
+# 添加ffmpeg重采样库
+#set(JNI_LIBS_DIR ${CMAKE_SOURCE_DIR}/src/main/jniLibs)
+#set(CPP_SRC_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
+#set(SRC_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
+#message ("JNI_LIBS_DIR=${JNI_LIBS_DIR}")
+#message ("ANDROID_ABI=${ANDROID_ABI}")
+#message ("CPP_SRC_DIR=${CPP_SRC_DIR}")
+#message ("CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
+
+add_library(avutil
+        SHARED
+        IMPORTED )
+set_target_properties(
+        avutil
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavutil.so
+)
+
+add_library(swresample
+        SHARED
+        IMPORTED )
+set_target_properties(swresample
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libswresample.so )
+
+# 引入头文件
+include_directories(includes)
+#include_directories(${CPP_SRC_DIR}/resample)
 # 创建并命名库，将其设置为静态的
 # 或共享，并提供其源代码的相对路径。
 # 你可以定义多个library库，并使用CMake来构建。
@@ -17,8 +46,10 @@ add_library( # 设置库的名称
         # 将库设置为共享库。
         SHARED
         # 为源文件提供一个相对路径。
-        src/main/cpp/resample/resample.c
-        src/main/cpp/speexdst/resample.c
+        test.c
+        resample/resample.cpp
+        resample/resampling_audio.c
+        resample/resample_helper.cpp
         )
 
 # 搜索指定预先构建的库和存储路径变量。因为CMake包括系统库搜索路径中默认情况下,只需要指定想添加公共NDK库的名称，在CMake验证库之前存在完成构建
@@ -30,4 +61,5 @@ find_library( # 设置path变量的名称
 target_link_libraries( # 指定目标库
         resample
         # 目标库到日志库的链接 包含在NDK
+        avutil swresample
         ${log-lib})
