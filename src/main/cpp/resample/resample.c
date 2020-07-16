@@ -129,19 +129,17 @@ JNIEXPORT void JNICALL Java_cn_com_lasong_media_Resample_mix
  * Method:    init
  * Signature: (II)V
  */
-extern "C" JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
+JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
 		(JNIEnv *env, jobject thiz,jlong nativeSwrContext, jlong src_channel_layout, jint src_fmt, jint src_rate,
 		 jlong dst_channel_layout, jint dst_fmt, jint dst_rate) {
 	SwrContext *swr_ctx;
 	SwrContextExt *ctx;
-    AVSampleFormat src_sample_fmt;
-    src_sample_fmt = static_cast<AVSampleFormat>(src_fmt);
-    AVSampleFormat dst_sample_fmt;
-    dst_sample_fmt = static_cast<AVSampleFormat>(dst_fmt);
+    AVSampleFormat src_sample_fmt = (AVSampleFormat) src_fmt;
+    AVSampleFormat dst_sample_fmt = (AVSampleFormat)dst_fmt;
 	if (nativeSwrContext == 0) {
-		ctx = static_cast<SwrContextExt *>(malloc(sizeof(SwrContextExt)));
-        swr_ctx = swr_alloc_set_opts(nullptr, dst_channel_layout, dst_sample_fmt, dst_rate, src_channel_layout,
-                                     src_sample_fmt, src_rate, 0, nullptr);
+		ctx = (SwrContextExt *)(malloc(sizeof(SwrContextExt)));
+        swr_ctx = swr_alloc_set_opts(NULL, dst_channel_layout, dst_sample_fmt, dst_rate, src_channel_layout,
+                                     src_sample_fmt, src_rate, 0, NULL);
 		ctx->swr_ctx = swr_ctx;
     } else {
 		ctx = (SwrContextExt *) nativeSwrContext;
@@ -169,41 +167,38 @@ extern "C" JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
 	int ret = 0;
 	if (!swr_ctx) {
         LOGE("Could not allocate resampler context\n");
-        goto end;
+        goto error;
 	}
 
 	/* initialize the resampling context */
 	if ((ret = swr_init(swr_ctx)) < 0) {
         LOGE("Failed to initialize the resampling context\n");
-        goto end;
+        goto error;
 	}
-
-    ret = av_samples_alloc_array_and_samples(&ctx->src_buffers, &ctx->src_linesize, ctx->src_nb_channels,
-                                             DEFAULT_NB_SAMPLES, ctx->src_sample_fmt, 0);
-    if (ret < 0) {
-        LOGE("Could not allocate source samples\n");
-        goto end;
-    }
-
-    ret = av_samples_alloc_array_and_samples(&ctx->dst_buffers, &ctx->dst_linesize, ctx->dst_nb_channels,
-                                             DEFAULT_NB_SAMPLES, ctx->dst_sample_fmt, 0);
-    if (ret < 0) {
-        LOGE("Could not allocate destination samples\n");
-        goto end;
-    }
 
 	if (nativeSwrContext == 0) {
-        jclass clz = env->GetObjectClass(thiz);
-        jfieldID fieldId = env->GetFieldID(clz, "nativeSwrContext", "J");
-        // 初始化成功
-        env->SetLongField(thiz, fieldId, (jlong) swr_ctx);
-	}
-//    int64_t dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) +
-//                                    1024, dst_rate, src_rate, AV_ROUND_UP);
+        ret = av_samples_alloc_array_and_samples(&ctx->src_buffers, &ctx->src_linesize, ctx->src_nb_channels,
+                                                 DEFAULT_NB_SAMPLES, ctx->src_sample_fmt, 0);
+        if (ret < 0) {
+            LOGE("Could not allocate source samples\n");
+            goto error;
+        }
 
+        ret = av_samples_alloc_array_and_samples(&ctx->dst_buffers, &ctx->dst_linesize, ctx->dst_nb_channels,
+                                                 DEFAULT_NB_SAMPLES, ctx->dst_sample_fmt, 0);
+        if (ret < 0) {
+            LOGE("Could not allocate destination samples\n");
+            goto error;
+        }
+
+        jclass clz = (*env)->GetObjectClass(env, thiz);
+        jfieldID fieldId = (*env)->GetFieldID(env, clz, "nativeSwrContext", "J");
+        // 初始化成功
+        (*env)->SetLongField(env, thiz, fieldId, (jlong) ctx);
+	}
     return 0;
 
-end:
+error:
     ret = AVERROR(ENOMEM);
     swr_ext_free(&ctx);
 	return ret;
@@ -224,15 +219,49 @@ JNIEXPORT void JNICALL Java_cn_com_lasong_media_Resample_destroy
     jfieldID fieldId = (*env)->GetFieldID(env, clz, "nativeSwrContext", "J");
     (*env)->SetLongField(env, thiz, fieldId, (jlong) 0);
 
-    struct SwrContext *swr_ctx = (struct SwrContext *) nativeSwrContext;
-    swr_free(&swr_ctx);
+    SwrContextExt *ctx = (SwrContextExt *) nativeSwrContext;
+    swr_ext_free(&ctx);
 }
 
 JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
-        (JNIEnv *env, jclass clz, jbyteArray in, jbyteArray out, jfloat volume) {
-//    if (!in || !out || !resampler) {
-//        return -1;
-//    }
+        (JNIEnv *env, jobject thiz, jlong nativeSwrContext , jbyteArray src_data, jint src_len) {
+    if (nativeSwrContext == 0) {
+        return -1;
+    }
+    SwrContextExt *ctx = (SwrContextExt *) nativeSwrContext;
+
+    jbyte *data = (*env)->GetByteArrayElements(env, src_data, NULL);
+
+    // 源数据大于预设的输入buffer大小, 重新分配
+    if (src_len > ctx->src_linesize) {
+        // 重新分配输出buffer
+        if (ctx->src_buffers) {
+            av_freep(&ctx->src_buffers[0]);
+        }
+        ret = av_samples_alloc_array_and_samples(&ctx->src_buffers, &ctx->src_linesize, ctx->src_nb_channels,
+                                                 DEFAULT_NB_SAMPLES, ctx->src_sample_fmt, 0);
+        if (ret < 0) {
+            LOGE("Could not allocate source samples\n");
+            goto error;
+        }
+        int ret = av_samples_alloc(ctx->src_buffers, &ctx->src_linesize, ctx->src_nb_channels,
+                         src_len, ctx->src_sample_fmt, 1)
+        if (ret < 0) {
+            LOGE("Could not allocate source samples\n");
+            goto error;
+        }
+    }
+    // packed类型的音频数据只需要传入第一个即可, swr_convert参数注释有说明
+    // 如果是planner, 这里就是分割成每个声道的数据
+    int single_len = src_len / ctx->src_nb_buffers;
+    for (int i = 0; i < ctx->src_nb_buffers; i++) {
+        memcpy(ctx->src_buffers[i], (uint8_t *) data + single_len * i, single_len);
+    }
+    swr_convert()
+    (*env)->ReleaseByteArrayElements(env, src_buffer, data, 0);
+    /* compute destination number of samples */
+    int dst_nb_samples = av_rescale_rnd(swr_get_delay(ctx->swr_ctx, ctx->src_sample_rate) +
+                                    1024, ctx->dst_sample_rate, ctx->src_sample_rate, AV_ROUND_UP);
 //    // in
 //	jbyte *in_byte = (*env)->GetByteArrayElements(env, in, 0);
 //    jsize in_len = (*env)->GetArrayLength(env, in);

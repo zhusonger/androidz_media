@@ -30,14 +30,13 @@ public class Resample {
 
     /**
      * 重采样
-     * @param in_data   解码源音频字节数据
-     * @param out_data  采样后的字节数据容器
-     * @param volume    采样音量调节
+     * @param src_data   解码源音频字节数据
+     * @param src_len  解码源音频字节数据有效数据长度
      * @return  返回实际重采样后的长度
      */
-    private native int resample(long nativeSwrContext, byte[] in_data, byte[] out_data, float volume);
-    public int resample(byte[] in_data, byte[] out_data) {
-        return resample(nativeSwrContext, in_data, out_data, 2);
+    private native int resample(long nativeSwrContext, byte[] src_data, int src_len);
+    public int resample(byte[] src_data, int src_len) {
+        return resample(nativeSwrContext, src_data, src_len);
     }
     /**
      * 初始化重采样工具类

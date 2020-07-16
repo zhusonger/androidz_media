@@ -25,10 +25,10 @@ JNIEXPORT void JNICALL Java_cn_com_lasong_media_Resample_mix
 /*
  * Class:     cn_com_lasong_media_Resample
  * Method:    resample
- * Signature: ([B[BF)I
+ * Signature: (J[BI)I
  */
 JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
-        (JNIEnv *, jclass, jbyteArray, jbyteArray, jfloat);
+        (JNIEnv *, jobject, jlong, jbyteArray, jint);
 
 /*
  * Class:     cn_com_lasong_media_Resample

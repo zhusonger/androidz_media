@@ -50,11 +50,11 @@ struct SwrContextExt {
     int src_nb_channels;
     int dst_nb_channels;
 
-    // buffer数组个数, package是1, planner根据声道数
+    // buffer数组个数, packed是1, planner根据声道数
     int src_nb_buffers;
     int dst_nb_buffers;
 };
 typedef struct SwrContextExt SwrContextExt;
-
+typedef enum AVSampleFormat AVSampleFormat;
 void swr_ext_free(SwrContextExt **ss);
 #endif //ANDROIDZ_RESAMPLE_HELPER_H

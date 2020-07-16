@@ -5,8 +5,6 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaFormat;
 
-import androidx.camera.core.ImageAnalysis;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -27,7 +25,6 @@ public class MP3Player implements IMP3DecodeCallback{
         if (null == format) {
             return;
         }
-        ImageAnalysis a;
         int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
         int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         int audioFormat = channelCount > 1 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO;
