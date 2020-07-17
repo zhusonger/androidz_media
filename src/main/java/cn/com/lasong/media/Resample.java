@@ -29,6 +29,19 @@ public class Resample {
     public int resample(byte[] src_data, int src_len) {
         return resample(nativeSwrContext, src_data, src_len);
     }
+
+    /**
+     * 读取重采样后的数据
+     * @param nativeSwrContext
+     * @param dst_data 大于等于resample返回长度的字节数组
+     * @param dst_len resample返回的字节数组长度
+     * @return 返回读取的字节数组长度
+     */
+    private native int read(long nativeSwrContext, byte[] dst_data, int dst_len);
+    public int read(byte[] dst_data, int dst_len) {
+        return read(nativeSwrContext, dst_data, dst_len);
+    }
+
     /**
      * 初始化重采样工具类
      * @param src_channel_layout 源音频声道排布 {@link cn.com.lasong.media.AVChannelLayout}
@@ -40,14 +53,10 @@ public class Resample {
      * @return
      */
     private native int init(long nativeSwrContext, long src_channel_layout, int src_fmt, int src_rate,
-                           long dst_channel_layout, int dst_fmt, int dst_rate, String dst_path);
-    public int init(long src_channel_layout, int src_fmt, int src_rate,
-                    long dst_channel_layout, int dst_fmt, int dst_rate, String dst_path) {
-        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate, dst_path);
-    }
+                           long dst_channel_layout, int dst_fmt, int dst_rate);
     public int init(long src_channel_layout, int src_fmt, int src_rate,
                     long dst_channel_layout, int dst_fmt, int dst_rate) {
-        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate, null);
+        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate);
     }
     /**
      * 销毁重采样工具类

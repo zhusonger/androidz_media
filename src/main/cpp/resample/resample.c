@@ -109,7 +109,7 @@ JNIEXPORT void JNICALL Java_cn_com_lasong_media_Resample_mix
 JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
         (JNIEnv *env, jobject thiz, jlong nativeSwrContext, jlong src_channel_layout, jint src_fmt,
          jint src_rate,
-         jlong dst_channel_layout, jint dst_fmt, jint dst_rate, jstring dst_path) {
+         jlong dst_channel_layout, jint dst_fmt, jint dst_rate) {
     SwrContext *swr_ctx;
     SwrContextExt *ctx;
     AVSampleFormat src_sample_fmt = (AVSampleFormat) src_fmt;
@@ -122,15 +122,9 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
         ctx->swr_ctx = swr_ctx;
     } else {
         ctx = (SwrContextExt *) nativeSwrContext;
-        swr_ctx = ctx->swr_ctx;
-        /* set options */
-        av_opt_set_int(swr_ctx, "in_channel_layout", src_channel_layout, 0);
-        av_opt_set_int(swr_ctx, "in_sample_rate", src_rate, 0);
-        av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt", src_sample_fmt, 0);
-
-        av_opt_set_int(swr_ctx, "out_channel_layout", dst_channel_layout, 0);
-        av_opt_set_int(swr_ctx, "out_sample_rate", dst_rate, 0);
-        av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", dst_sample_fmt, 0);
+        swr_ctx = swr_alloc_set_opts(ctx->swr_ctx, dst_channel_layout, dst_sample_fmt, dst_rate,
+                                     src_channel_layout,
+                                     src_sample_fmt, src_rate, 0, NULL);
     }
     ctx->src_sample_fmt = src_sample_fmt;
     ctx->src_sample_rate = src_rate;
@@ -144,16 +138,6 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
     ctx->dst_nb_buffers = av_sample_fmt_is_planar(dst_sample_fmt) ? ctx->dst_nb_channels : 1;
     ctx->dst_bytes_per_sample = av_get_bytes_per_sample(src_sample_fmt);
 
-    if (dst_path) {
-        /*Get the native string from javaString*/
-        const char *path = (*env)->GetStringUTFChars(env, dst_path, 0);
-
-        ctx->dst_file = fopen(path, "wb");
-
-        /*DON'T FORGET THIS LINE!!!*/
-        (*env)->ReleaseStringUTFChars(env, dst_path, path);
-    }
-
     int ret = 0;
     if (!swr_ctx) {
         LOGE("Could not allocate resampler context\n");
@@ -166,25 +150,33 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
         goto error;
     }
 
+    // 重新分配输出buffer
+    if (ctx->src_buffers) {
+        av_freep(&ctx->src_buffers[0]);
+    }
+    ret = av_samples_alloc_array_and_samples(&ctx->src_buffers, &ctx->src_linesize,
+                                             ctx->src_nb_channels,
+                                             DEFAULT_NB_SAMPLES, ctx->src_sample_fmt, 0);
+    if (ret < 0) {
+        LOGE("Could not allocate source samples\n");
+        goto error;
+    }
+    ctx->src_nb_samples = DEFAULT_NB_SAMPLES;
+
+    // 重新分配输出buffer
+    if (ctx->dst_buffers) {
+        av_freep(&ctx->dst_buffers[0]);
+    }
+    ret = av_samples_alloc_array_and_samples(&ctx->dst_buffers, &ctx->dst_linesize,
+                                             ctx->dst_nb_channels,
+                                             DEFAULT_NB_SAMPLES, ctx->dst_sample_fmt, 0);
+    if (ret < 0) {
+        LOGE("Could not allocate destination samples\n");
+        goto error;
+    }
+    ctx->dst_nb_samples = DEFAULT_NB_SAMPLES;
+
     if (nativeSwrContext == 0) {
-        ret = av_samples_alloc_array_and_samples(&ctx->src_buffers, &ctx->src_linesize,
-                                                 ctx->src_nb_channels,
-                                                 DEFAULT_NB_SAMPLES, ctx->src_sample_fmt, 0);
-        if (ret < 0) {
-            LOGE("Could not allocate source samples\n");
-            goto error;
-        }
-        ctx->src_nb_samples = DEFAULT_NB_SAMPLES;
-
-        ret = av_samples_alloc_array_and_samples(&ctx->dst_buffers, &ctx->dst_linesize,
-                                                 ctx->dst_nb_channels,
-                                                 DEFAULT_NB_SAMPLES, ctx->dst_sample_fmt, 0);
-        if (ret < 0) {
-            LOGE("Could not allocate destination samples\n");
-            goto error;
-        }
-        ctx->dst_nb_samples = DEFAULT_NB_SAMPLES;
-
         jclass clz = (*env)->GetObjectClass(env, thiz);
         jfieldID fieldId = (*env)->GetFieldID(env, clz, "nativeSwrContext", "J");
         // 初始化成功
@@ -192,8 +184,12 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_media_Resample_init
     }
     return 0;
 
-    error:
+error:
     ret = AVERROR(ENOMEM);
+    // 将nativeSWContext设置为0，防止重复调用close导致崩溃
+    jclass clz = (*env)->GetObjectClass(env, thiz);
+    jfieldID fieldId = (*env)->GetFieldID(env, clz, "nativeSwrContext", "J");
+    (*env)->SetLongField(env, thiz, fieldId, (jlong) 0);
     swr_ext_free(&ctx);
     return ret;
 }
@@ -228,7 +224,7 @@ JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
 
     int src_nb_samples = convert_samples(src_len, ctx->src_bytes_per_sample, ctx->src_nb_channels);
     // 源数据大于预设的输入buffer大小, 重新分配
-    if (src_len > ctx->src_linesize) {
+    if (src_nb_samples > ctx->src_nb_samples) {
         // 重新分配输出buffer
         if (ctx->src_buffers) {
             av_freep(&ctx->src_buffers[0]);
@@ -285,9 +281,6 @@ JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
     }
     (*env)->ReleaseByteArrayElements(env, src_data, data, 0);
 
-    if (ctx->dst_file) {
-        fwrite(ctx->dst_buffers[0], 1, dst_buffer_size, ctx->dst_file);
-    }
     return dst_buffer_size;
 
 error:
@@ -295,6 +288,32 @@ error:
     return -1;
 }
 
+/*
+ * Class:     cn_com_lasong_media_Resample
+ * Method:    read
+ * Signature: (J[BI)I
+ */
+JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_read
+        (JNIEnv *env, jobject thiz, jlong nativeSwrContext, jbyteArray dst_data, jint dst_len) {
+    if (nativeSwrContext == 0) {
+        return -1;
+    }
+    SwrContextExt *ctx = (SwrContextExt *) nativeSwrContext;
 
+    jbyte *data = (*env)->GetByteArrayElements(env, dst_data, NULL);
+
+    int ret;
+    if (ctx->dst_linesize >= dst_len) {
+        memcpy(data, ctx->dst_buffers[0], dst_len);
+        ret = dst_len;
+    } else {
+        memcpy(data, ctx->dst_buffers[0], ctx->dst_linesize);
+        ret = ctx->dst_linesize;
+    }
+
+    (*env)->ReleaseByteArrayElements(env, dst_data, data, 0);
+
+    return ret;
+}
 
 

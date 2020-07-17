@@ -57,8 +57,6 @@ struct SwrContextExt {
     // 每个采样点字节数
     int src_bytes_per_sample;
     int dst_bytes_per_sample;
-
-    FILE *dst_file;
 };
 typedef struct SwrContextExt SwrContextExt;
 typedef enum AVSampleFormat AVSampleFormat;

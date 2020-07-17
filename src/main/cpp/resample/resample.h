@@ -25,11 +25,19 @@ JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
 
 /*
  * Class:     cn_com_lasong_media_Resample
+ * Method:    read
+ * Signature: (J[BI)I
+ */
+JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_read
+        (JNIEnv *, jobject, jlong, jbyteArray, jint);
+
+/*
+ * Class:     cn_com_lasong_media_Resample
  * Method:    init
  * Signature: (JJIIJIILjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_init
-        (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jint, jint, jstring);
+        (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jint, jint);
 /*
  * Class:     cn_com_lasong_media_Resample
  * Method:    destroy
