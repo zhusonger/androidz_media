@@ -49,10 +49,14 @@ public class Resample {
      * @return
      */
     private native int init(long nativeSwrContext, long src_channel_layout, int src_fmt, int src_rate,
-                           long dst_channel_layout, int dst_fmt, int dst_rate);
+                           long dst_channel_layout, int dst_fmt, int dst_rate, String dst_path);
+    public int init(long src_channel_layout, int src_fmt, int src_rate,
+                    long dst_channel_layout, int dst_fmt, int dst_rate, String dst_path) {
+        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate, dst_path);
+    }
     public int init(long src_channel_layout, int src_fmt, int src_rate,
                     long dst_channel_layout, int dst_fmt, int dst_rate) {
-        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate);
+        return init(nativeSwrContext, src_channel_layout, src_fmt, src_rate, dst_channel_layout, dst_fmt, dst_rate, null);
     }
     /**
      * 销毁重采样工具类

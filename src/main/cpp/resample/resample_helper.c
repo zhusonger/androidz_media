@@ -5,6 +5,11 @@
 #include "resample_helper.h"
 
 void clear_context(SwrContextExt *s){
+    if (s->dst_file) {
+        fclose(s->dst_file);
+    }
+    av_freep(&s->dst_file);
+
     swr_free(&s->swr_ctx);
     if (s->src_buffers) {
         av_freep(&s->src_buffers[0]);
@@ -36,4 +41,9 @@ void swr_ext_free(SwrContextExt **ss) {
         clear_context(s);
     }
     av_freep(ss);
+}
+
+int convert_samples(int bytes_len, int bytes_per_sample, int nb_channels) {
+    int nb_samples = bytes_len / bytes_per_sample / nb_channels;
+    return nb_samples;
 }

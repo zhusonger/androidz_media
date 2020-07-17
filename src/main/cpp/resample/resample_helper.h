@@ -53,8 +53,15 @@ struct SwrContextExt {
     // buffer数组个数, packed是1, planner根据声道数
     int src_nb_buffers;
     int dst_nb_buffers;
+
+    // 每个采样点字节数
+    int src_bytes_per_sample;
+    int dst_bytes_per_sample;
+
+    FILE *dst_file;
 };
 typedef struct SwrContextExt SwrContextExt;
 typedef enum AVSampleFormat AVSampleFormat;
 void swr_ext_free(SwrContextExt **ss);
+int convert_samples(int bytes_len, int bytes_per_sample, int nb_channels);
 #endif //ANDROIDZ_RESAMPLE_HELPER_H

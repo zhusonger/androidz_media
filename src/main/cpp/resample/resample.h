@@ -33,10 +33,10 @@ JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_resample
 /*
  * Class:     cn_com_lasong_media_Resample
  * Method:    init
- * Signature: (IIIIII)I
+ * Signature: (JJIIJIILjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_cn_com_lasong_media_Resample_init
-        (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jint, jint);
+        (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jint, jint, jstring);
 /*
  * Class:     cn_com_lasong_media_Resample
  * Method:    destroy
