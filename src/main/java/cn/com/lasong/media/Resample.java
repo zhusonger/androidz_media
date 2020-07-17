@@ -12,16 +12,6 @@ public class Resample {
     }
 
     /**
-     * 双声道转单声道ja
-     * 单声道直接读取src的值
-     * 双声道转换一下
-     * @param src   双声道解码字节数据
-     * @param dst   单声道结果容器
-     * @param channel 声道数
-     */
-    public static native void stereo2mono(/*DirectByteBuffer*/ByteBuffer src, byte[] dst, int channel);
-
-    /**
      * 将dst数据更新为混音后的数据
      * @param dst  原音频
      * @param mix  混音音频
