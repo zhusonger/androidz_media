@@ -6,13 +6,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     cn_com_lasong_media_Resample
- * Method:    stereo2mono
- * Signature: (Ljava/nio/ByteBuffer;[BI)V
- */
-JNIEXPORT void JNICALL Java_cn_com_lasong_media_Resample_stereo2mono
-        (JNIEnv *, jclass, jobject, jbyteArray, jint);
 
 /*
  * Class:     cn_com_lasong_media_Resample

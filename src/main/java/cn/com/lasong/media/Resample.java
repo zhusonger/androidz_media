@@ -13,6 +13,7 @@ public class Resample {
 
     /**
      * 将dst数据更新为混音后的数据
+     * mix还是直接只支持默认均一化合成, 用ffmpeg加入的库比较大
      * @param dst  原音频
      * @param mix  混音音频
      */
