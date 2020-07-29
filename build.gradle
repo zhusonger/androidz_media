@@ -14,23 +14,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
 
-//        externalNativeBuild {
-//            cmake {
-//                cppFlags "-std=c++14"
-////                cppFlags ""
-////                // 指定只用clang编译器
-////                // Clang是一个C语言、Objective-C、C++语言的轻量级编译器。
-////                arguments "-DANDROID_TOOLCHAIN=clang"
-////                // 生成.so库的目标平台
-////                abiFilters "armeabi-v7a" , 'arm64-v8a'
-//            }
-//
-//        }
         ndk {
             abiFilters /*'armeabi',*/ 'armeabi-v7a', 'arm64-v8a'
         }
     }
-
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"

@@ -107,6 +107,8 @@ build() {
 build_all() {
 
   COMMON_OPTIONS="$COMMON_OPTIONS --target-os=android"
+  # --disable-static 与 --enable-shared成对使用
+  # static 表示生产.a静态库 shared表示生成.so动态库
   COMMON_OPTIONS="$COMMON_OPTIONS --disable-static"
   COMMON_OPTIONS="$COMMON_OPTIONS --enable-shared"
   # COMMON_OPTIONS="$COMMON_OPTIONS --enable-protocols"

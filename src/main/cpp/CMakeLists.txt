@@ -5,17 +5,12 @@ cmake_minimum_required(VERSION 3.4.1)
 
 
 # 二进制码剥除
-#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 # 添加ffmpeg重采样库
 set(JNI_LIBS_DIR ${CMAKE_SOURCE_DIR}/../jniLibs)
-#set(CPP_SRC_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
-#set(SRC_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
 message ("JNI_LIBS_DIR=${JNI_LIBS_DIR}")
-#message ("ANDROID_ABI=${ANDROID_ABI}")
-#message ("CPP_SRC_DIR=${CPP_SRC_DIR}")
-#message ("CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
 
 add_library(avutil
         SHARED
@@ -45,7 +40,6 @@ add_library( # 设置库的名称
         SHARED
         # 为源文件提供一个相对路径。
         resample/resample.c
-        resample/resampling_audio.c
         resample/resample_helper.c
         )
 
