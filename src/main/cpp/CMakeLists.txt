@@ -28,7 +28,7 @@ set_target_properties(swresample
 
 # 引入头文件
 include_directories( ${JNI_LIBS_DIR}/includes)
-#include_directories(${CPP_SRC_DIR}/resample)
+
 # 创建并命名库，将其设置为静态的
 # 或共享，并提供其源代码的相对路径。
 # 你可以定义多个library库，并使用CMake来构建。
