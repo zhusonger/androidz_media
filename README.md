@@ -4,7 +4,7 @@
 # 引入
 
 ```
-implementation 'cn.com.lasong:meida:0.0.4'
+implementation 'cn.com.lasong:meida:latest.release'
 ```
 
 ## v0.0.1
