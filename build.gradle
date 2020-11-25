@@ -61,9 +61,9 @@ publish {
     bintrayUser = rootProject.ext.bintrayUser
     bintrayKey = rootProject.ext.bintrayKey
     dryRun false
-    override true
+    override false
     artifactId = 'media'
-    publishVersion = '0.0.4'
+    publishVersion = '0.0.5'
     desc = 'AndroidZ Media'
     website = 'https://github.com/zhusonger/androidz_media'
 }
